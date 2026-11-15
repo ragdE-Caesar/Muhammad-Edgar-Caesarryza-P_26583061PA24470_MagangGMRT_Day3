@@ -3,7 +3,7 @@
 ## Profile
 
 - Nama Lengkap: Muhammad Edgar Caesarryza
-- NIM: 26583061PA24470
+- NIM: 26/583061/PA/24470
 - Divisi: Programmer
 - Studi Kasus: Magang GMRT Hari 3
 
