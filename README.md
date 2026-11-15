@@ -15,27 +15,27 @@ Roll dan pitch dihitung dari akselerometer relatif terhadap posisi awal saat kal
 
 ## Perangkat dan Pemetaan Pin
 
-| Perangkat | Pin ESP32 | Fungsi |
-| --- | --- | --- |
-| MPU6050 SDA | GPIO21 | Data I2C |
-| MPU6050 SCL | GPIO22 | Clock I2C |
-| PIR OUT | GPIO33 | Sinyal deteksi gerakan |
-| Servo 1 | GPIO25 | Mengikuti kebalikan roll |
-| Servo 2 | GPIO26 | Mengikuti kebalikan roll |
-| Servo 3 | GPIO27 | Mengikuti pitch |
-| Servo 4 | GPIO14 | Mengikuti pitch |
-| Servo 5 | GPIO32 | Mengikuti estimasi yaw |
+| Perangkat   | Pin ESP32 | Fungsi                   |
+| ----------- | --------- | ------------------------ |
+| MPU6050 SDA | GPIO21    | Data I2C                 |
+| MPU6050 SCL | GPIO22    | Clock I2C                |
+| PIR OUT     | GPIO33    | Sinyal deteksi gerakan   |
+| Servo 1     | GPIO25    | Mengikuti kebalikan roll |
+| Servo 2     | GPIO26    | Mengikuti kebalikan roll |
+| Servo 3     | GPIO27    | Mengikuti pitch          |
+| Servo 4     | GPIO14    | Mengikuti pitch          |
+| Servo 5     | GPIO32    | Mengikuti estimasi yaw   |
 
 Komunikasi MPU6050 menggunakan I2C. Servo dikendalikan dengan sinyal PWM 50 Hz (periode 20 ms).
 
 ## Cara Kerja
 
-| Input/perilaku | Output | Penjelasan |
-| --- | --- | --- |
-| Roll akselerometer | Servo 1 dan 2 | Mengikuti kebalikan roll. Keduanya menerima perintah sudut yang sama. |
-| Pitch akselerometer | Servo 3 dan 4 | Mengikuti pitch. |
-| Laju giroskop sumbu Z | Servo 5 | Laju diintegrasikan menjadi sudut yaw; saat berhenti, tunggu 1 detik lalu kembali ke 0°. |
-| PIR mendeteksi LOW ke HIGH | Semua servo | Pose khusus selama 900 ms, lalu posisi 0° selama 900 ms; setelah itu kendali sensor aktif kembali. |
+| Input/perilaku             | Output        | Penjelasan                                                                                         |
+| -------------------------- | ------------- | -------------------------------------------------------------------------------------------------- |
+| Roll akselerometer         | Servo 1 dan 2 | Mengikuti kebalikan roll. Keduanya menerima perintah sudut yang sama.                              |
+| Pitch akselerometer        | Servo 3 dan 4 | Mengikuti pitch.                                                                                   |
+| Laju giroskop sumbu Z      | Servo 5       | Laju diintegrasikan menjadi sudut yaw; saat berhenti, tunggu 1 detik lalu kembali ke 0°.           |
+| PIR mendeteksi LOW ke HIGH | Semua servo   | Pose khusus selama 900 ms, lalu posisi 0° selama 900 ms; setelah itu kendali sensor aktif kembali. |
 
 Semua sudut dibatasi pada -90° sampai +90° dan dipetakan secara linear ke pulsa 1000-2000 mikrodetik. Posisi 0° menghasilkan pulsa 1500 mikrodetik.
 
@@ -64,7 +64,7 @@ Saat PIR aktif, pose yang dikirim adalah Servo 1 = +45°, Servo 2 = -45°, Servo
 
 - [Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3.ino](./Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3.ino) — program Arduino / ESP32
 - [schematic_wokwi.jpg](./schematic_wokwi.jpg) — diagram sambungan rangkaian
-- [serial_test_case_1.jpg](./serial_test_case_1.jpg) — contoh keluaran Serial Monitor, bukan tangkapan aktual Wokwi
+- [Serial_test_case_1.png](./Serial_test_case_1.png) — tangkapan aktual simulasi Wokwi untuk Kasus Uji 1
 - [flowchart.jpg](./flowchart.jpg) — diagram alur (opsional tambahan nilai)
 - [Link_Jawaban.txt](./Link_Jawaban.txt) — pengumpulan tautan
 
@@ -80,7 +80,7 @@ Saat PIR aktif, pose yang dikirim adalah Servo 1 = +45°, Servo 2 = -45°, Servo
 4. Hubungkan ESP32 ke sensor MPU6050 dan PIR sesuai skema pada [schematic_wokwi.jpg](./schematic_wokwi.jpg).
 5. Upload program ke ESP32.
 6. Buka Serial Monitor pada baudrate 115200.
-7. Letakkan sensor pada posisi awal yang rata dan diam ketika pesan kalibrasi muncul. Tunggu pesan “Kalibrasi selesai.”
+7. Letakkan sensor pada posisi awal yang rata dan diam selama kalibrasi. Setelah pesan “Kalibrasi selesai”, ubah kontrol **Acceleration** untuk menguji Roll/Pitch. Sudut pada posisi awal kalibrasi memang akan terbaca mendekati 0°.
 8. Untuk simulasi/eksperimen Wokwi, buka link berikut dan jalankan simulasi:
    - Wokwi: [https://wokwi.com/projects/480749043854897153](https://wokwi.com/projects/480749043854897153)
 9. Input uji:
@@ -97,7 +97,11 @@ Untuk sudut tepat Roll = +30° dan Pitch = -20°, PWM nominal yang dihitung prog
 - Servo 3 = 1389 us
 - Servo 4 = 1389 us
 
-Sketch mencetak nilai ketika pembacaan berada dalam toleransi ±1.5° dari sudut uji, dan mencetaknya sekali setiap kali board dinyalakan. Nilai aktual dapat berbeda sedikit karena pembacaan sensor dan orientasi simulasi. Gambar [serial_test_case_1.jpg](./serial_test_case_1.jpg) adalah contoh keluaran, bukan tangkapan aktual dari Wokwi.
+Sketch mencetak nilai ketika pembacaan berada dalam toleransi ±1.5° dari sudut uji, dan mencetaknya sekali setiap kali board dinyalakan. Pada tangkapan Wokwi berikut, nilai yang tercetak adalah Roll 30.13°, Pitch -20.41°, Servo 1-2 = 1333 mikrodetik, dan Servo 3-4 = 1387 mikrodetik. Nilainya sedikit berbeda dari nominal karena sudut yang terbaca bukan tepat +30° dan -20°.
+
+![Tangkapan simulasi Wokwi untuk Kasus Uji 1](./Serial_test_case_1.png)
+
+Tangkapan ini mendukung Kasus Uji 1. Bukti Kasus Uji 2 telah ditambahkan ke folder Google Drive pada tautan di [Link_Jawaban.txt](./Link_Jawaban.txt).
 
 ## Struktur Program dan Pengembangan
 
@@ -106,6 +110,6 @@ Sketch mencetak nilai ketika pembacaan berada dalam toleransi ±1.5° dari sudut
 - `readMpu6050()` memperbarui sudut dan estimasi yaw.
 - `handlePirTrigger()` mendeteksi transisi PIR, sedangkan `updatePirSequence()` mengatur pose khusus dan waktu kembali ke posisi nol.
 - `applySensorDrivenMotion()` mengirim sudut hasil sensor ke servo.
-- Urutan yaw dan PIR memakai state machine berbasis `millis()`, sehingga loop sensor tidak berhenti saat menunggu waktu tertentu. Periode pembacaan utama 20 ms; telemetri Serial dicetak setiap 250 ms.
+- Urutan yaw dan PIR memakai state machine berbasis `millis()`, sehingga loop sensor tidak berhenti saat menunggu waktu tertentu. Periode pembacaan utama 20 ms; telemetri akselerasi mentah, sudut, dan laju gyro dicetak setiap 250 ms.
 
 Ubah pin di bagian definisi pin pada sketch jika sambungan perangkat berbeda. Parameter seperti batas sudut, ambang gerak yaw, waktu urutan PIR, dan jumlah sampel kalibrasi diletakkan pada konstanta di bagian awal kode. Bila mengganti servo, periksa batas pulsa dan sesuaikan secara mekanis sebelum menjalankan gerakan penuh.

@@ -1,18 +1,20 @@
-TAUTAN PENGUMPULAN
+DAFTAR TAUTAN PENGUMPULAN
 
 Repositori GitHub:
 https://github.com/ragdE-Caesar/Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3
 
-Simulasi Wokwi:
+Tautan simulasi Wokwi:
 https://wokwi.com/projects/480749043854897153
 
-Folder video Google Drive:
+Folder video (Google Drive):
 https://drive.google.com/drive/folders/1nATLaJgOFy5PBoNB3VF7L-XtPgFSM9kI?usp=drive_link
 
-BERKAS DI REPOSITORI
+Bukti Kasus Uji 2 tersedia di folder Google Drive pada tautan di atas.
+
+BERKAS YANG DISERTAKAN
 - Program ESP32: ./Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3.ino
 - Dokumentasi: ./README.md
-- Diagram sambungan: ./schematic_wokwi.jpg
+- Diagram sambungan (Bahasa Indonesia): ./schematic_wokwi.jpg
 - Diagram alur: ./flowchart.jpg
-- Contoh keluaran Serial Monitor Kasus Uji 1: ./serial_test_case_1.jpg
+- Tangkapan simulasi Wokwi Kasus Uji 1: ./Serial_test_case_1.png
 
