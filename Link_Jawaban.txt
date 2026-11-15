@@ -1,0 +1,6 @@
+GitHub Repository: https://github.com/ragdE-Caesar/Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3
+Wokwi Simulation: https://wokwi.com/projects/480749043854897153
+Google Drive Video: [isi link Google Drive video disini]
+Schematic JPG: ./schematic_wokwi.jpg
+Serial Monitor Screenshot: ./serial_test_case_1.jpg
+Flowchart JPG: ./flowchart.jpg
