@@ -1,6 +1,18 @@
-GitHub Repository: https://github.com/ragdE-Caesar/Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3
-Wokwi Simulation: https://wokwi.com/projects/480749043854897153
-Google Drive Video: [isi link Google Drive video disini]
-Schematic JPG: ./schematic_wokwi.jpg
-Serial Monitor Screenshot: ./serial_test_case_1.jpg
-Flowchart JPG: ./flowchart.jpg
+TAUTAN PENGUMPULAN
+
+Repositori GitHub:
+https://github.com/ragdE-Caesar/Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3
+
+Simulasi Wokwi:
+https://wokwi.com/projects/480749043854897153
+
+Folder video Google Drive:
+https://drive.google.com/drive/folders/1nATLaJgOFy5PBoNB3VF7L-XtPgFSM9kI?usp=drive_link
+
+BERKAS DI REPOSITORI
+- Program ESP32: ./Muhammad-Edgar-Caesarryza-P_26583061PA24470_MagangGMRT_Day3.ino
+- Dokumentasi: ./README.md
+- Diagram sambungan: ./schematic_wokwi.jpg
+- Diagram alur: ./flowchart.jpg
+- Contoh keluaran Serial Monitor Kasus Uji 1: ./serial_test_case_1.jpg
+
