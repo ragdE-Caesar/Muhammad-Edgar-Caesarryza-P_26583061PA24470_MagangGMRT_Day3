@@ -1,19 +1,48 @@
 /*
   Muhammad Edgar Caesarryza
-  NIM: 26583061PA24470
+  NIM: 26/583061/PA/24470
 
   Studi Kasus Magang Hari 3 - Servo Pengikut Sumbu dan Deteksi Gerakan
-  Simulasi Wokwi menggunakan MPU6050 sebagai pengganti BNO055.
 
-  Roll dan pitch dihitung dari akselerometer. Yaw diperkirakan dengan
-  mengintegrasikan laju giroskop sumbu Z. MPU6050 tidak memiliki magnetometer,
-  sehingga estimasi yaw dapat mengalami penyimpangan seiring waktu.
+  TUJUAN
+  ESP32 membaca orientasi dari MPU6050, menggerakkan lima servo, dan
+  menjalankan pose sementara ketika PIR mendeteksi gerakan. MPU6050 digunakan
+  sebagai pengganti BNO055 untuk simulasi ini.
 
-  Saat mulai, letakkan MPU6050 rata dan diam. Sketch mengkalibrasi titik nol
-  roll/pitch serta bias giroskop sumbu Z. Servo 1 dan Servo 2 menerima perintah
-  roll yang sama; pasang keduanya secara bercermin jika arah gerak fisiknya
-  harus berlawanan. PIR mengambil alih sementara: semua servo bergerak ke pose
-  khusus, kembali ke posisi awal, lalu mengikuti sensor lagi.
+  KONEKSI
+  MPU6050: SDA GPIO21, SCL GPIO22
+  PIR:     OUT GPIO33
+  Servo:   1 GPIO25, 2 GPIO26, 3 GPIO27, 4 GPIO14, 5 GPIO32
+
+  ALUR KERJA
+  1. Saat startup, sketch mengambil 200 sampel sensor untuk menghitung titik
+     nol roll/pitch dan bias giroskop Z. Kalibrasi memerlukan sensor rata dan
+     diam.
+  2. Roll dan pitch dihitung dari akselerometer relatif terhadap titik nol.
+     Servo 1-2 mengikuti kebalikan roll; Servo 3-4 mengikuti pitch.
+  3. Yaw dihitung dengan mengintegrasikan laju giroskop Z ke sudut. Jika laju
+     berada di bawah ambang gerak, sketch menunggu 1 detik lalu mengembalikan
+     Servo 5 ke nol.
+  4. Tepi naik PIR (LOW ke HIGH) memulai pose khusus selama 900 ms, kemudian
+     semua servo ditahan di posisi nol selama 900 ms sebelum kendali sensor
+     dilanjutkan.
+
+  ASUMSI DAN BATASAN
+  - Output PIR aktif HIGH dan menghasilkan level LOW kembali sebelum deteksi
+    baru dapat dimulai.
+  - Akselerometer terutama mengukur gravitasi; percepatan translasi dapat
+    memengaruhi perkiraan roll/pitch.
+  - MPU6050 tidak memiliki magnetometer. Yaw adalah estimasi relatif dan dapat
+    mengalami drift; nilai nol bukan arah utara atau heading absolut.
+  - Rentang pulsa servo diasumsikan 1000-2000 mikrodetik untuk sudut -90..+90.
+    Servo atau mekanisme berbeda mungkin memerlukan kalibrasi pulsa mekanis.
+  - Servo 1 dan 2 menerima perintah yang sama. Pasang keduanya bercermin jika
+    mekanisme memerlukan arah gerak fisik yang berlawanan.
+  - Pesan PWM Kasus Uji 1 dicetak sekali saat sudut berada dalam toleransi
+    ±1.5 derajat.
+
+  Untuk penjelasan pin, parameter, cara uji, dan detail keterbatasan, lihat
+  README.md.
 */
 
 #include <Wire.h>
@@ -32,6 +61,7 @@
 #define SDA_PIN 21
 #define SCL_PIN 22
 
+// Parameter utama pengendali. Sudut internal menggunakan derajat.
 const float SERVO_ANGLE_LIMIT = 90.0f;
 const float YAW_RATE_THRESHOLD_RAD_S = 0.04f;
 const float RAD_TO_DEGREES = 57.2957795f;
@@ -67,6 +97,7 @@ unsigned long pirSequenceStartMs = 0;
 bool pirInputWasHigh = false;
 bool caseTestPrinted = false;
 
+// State yaw memisahkan kondisi bergerak, menunggu, dan kembali ke nol.
 enum YawState
 {
   YAW_IDLE,
@@ -84,6 +115,7 @@ enum PirState
 YawState yawState = YAW_IDLE;
 PirState pirState = PIR_IDLE;
 
+// Membatasi perintah agar servo tidak menerima sudut di luar rentang program.
 float clampAngle(float angle)
 {
   return constrain(angle, -SERVO_ANGLE_LIMIT, SERVO_ANGLE_LIMIT);
@@ -91,6 +123,7 @@ float clampAngle(float angle)
 
 int angleToPwmMicroseconds(float angle)
 {
+  // Pemetaan linear: -90 derajat = 1000 us, 0 = 1500 us, +90 = 2000 us.
   const float limitedAngle = clampAngle(angle);
   const float pulseWidth =
       1000.0f + ((limitedAngle + 90.0f) * (1000.0f / 180.0f));
@@ -102,6 +135,7 @@ void setServoToAngle(Servo &servo, float angle)
   servo.writeMicroseconds(angleToPwmMicroseconds(angle));
 }
 
+// Menghubungkan servo dengan rentang pulsa yang digunakan oleh pemetaan sudut.
 void attachServos()
 {
   servo1.attach(SERVO1_PIN, 1000, 2000);
@@ -122,6 +156,7 @@ void homeAllServos()
 
 void setCustomPirPose()
 {
+  // Pose PIR: masing-masing servo menerima sudut yang ditentukan di sini.
   setServoToAngle(servo1, 45.0f);
   setServoToAngle(servo2, -45.0f);
   setServoToAngle(servo3, 30.0f);
@@ -129,16 +164,19 @@ void setCustomPirPose()
   setServoToAngle(servo5, 60.0f);
 }
 
+// Menghitung roll dalam derajat dari komponen akselerasi Y dan Z.
 float calculateRoll(float ay, float az)
 {
   return atan2f(ay, az) * RAD_TO_DEGREES;
 }
 
+// Menghitung pitch dalam derajat dari komponen akselerasi X, Y, dan Z.
 float calculatePitch(float ax, float ay, float az)
 {
   return atan2f(-ax, sqrtf((ay * ay) + (az * az))) * RAD_TO_DEGREES;
 }
 
+// Mengambil rata-rata awal untuk mengurangi offset pemasangan dan bias gyro.
 void calibrateMpu6050()
 {
   float rollTotal = 0.0f;
@@ -174,6 +212,8 @@ void calibrateMpu6050()
   Serial.println("Kalibrasi selesai.");
 }
 
+// Membaca satu sampel, memperbarui roll/pitch, dan mengintegrasikan yaw.
+// Gyro dari library memakai rad/s; hasil integrasi disimpan dalam derajat.
 void readMpu6050(float deltaTimeSeconds)
 {
   sensors_event_t accel;
@@ -216,6 +256,7 @@ void readMpu6050(float deltaTimeSeconds)
   }
 }
 
+// Memulai urutan PIR hanya pada tepi naik agar level HIGH tidak memicu berulang.
 void handlePirTrigger(unsigned long nowMs)
 {
   const bool pirIsHigh = digitalRead(PIR_PIN) == HIGH;
@@ -232,6 +273,7 @@ void handlePirTrigger(unsigned long nowMs)
   pirInputWasHigh = pirIsHigh;
 }
 
+// Menjalankan pose khusus dan posisi nol tanpa menghentikan loop dengan delay.
 void updatePirSequence(unsigned long nowMs)
 {
   if (pirState == PIR_CUSTOM_POSE)
@@ -261,6 +303,7 @@ void updatePirSequence(unsigned long nowMs)
   }
 }
 
+// Mengubah nilai sensor menjadi perintah untuk masing-masing kelompok servo.
 void applySensorDrivenMotion()
 {
   const float rollTarget = -currentRoll;
@@ -273,6 +316,7 @@ void applySensorDrivenMotion()
   setServoToAngle(servo5, currentYaw);
 }
 
+// Menampilkan PWM nominal saat input Kasus Uji 1 terdeteksi dalam toleransi.
 void printRollPitchCaseTest()
 {
   if (caseTestPrinted ||
@@ -299,6 +343,7 @@ void printRollPitchCaseTest()
   caseTestPrinted = true;
 }
 
+// Mengirim telemetri berkala ke Serial Monitor.
 void printSensorDebug(unsigned long nowMs)
 {
   if (nowMs - lastDebugTimeMs < DEBUG_PERIOD_MS)
@@ -344,6 +389,7 @@ void loop()
 {
   const unsigned long nowMs = millis();
 
+  // Membatasi laju pembacaan sensor tanpa delay yang menghentikan state machine.
   if (nowMs - lastSensorTimeMs < SENSOR_PERIOD_MS)
   {
     return;
